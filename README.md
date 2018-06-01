@@ -11,7 +11,7 @@ List of Algorithms:
   - [Regressor](https://github.com/santhoshhari/from_scratch/blob/master/decision_tree/decision_tree_classifier.py)
   - [Classifier](https://github.com/santhoshhari/from_scratch/blob/master/decision_tree/decision_tree_classifier.py)
 - Random Forest (Python)
-  - Regressor
-  - Classifier
+  - [Regressor](https://github.com/santhoshhari/from_scratch/blob/master/random_forest/random_forest_regressor.py)
+  - [Classifier](https://github.com/santhoshhari/from_scratch/blob/master/random_forest/random_forest_classifier.py)
 - Gradient Boosting (Adaboost, Python)
   - Regressor

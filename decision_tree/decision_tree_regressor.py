@@ -67,7 +67,7 @@ class DecisionTreeRegressor():
     def __repr__(self):
         s = f'n: {self.n_rows}; predicted_value:{self.predicted_value}'
         if not self.is_leaf:
-            s += f'; score:{self.score}; split:{self.split};' +
+            s += f'; score:{self.score}; split:{self.split};' +\
             f' var:{self.split_name}'
         return s
 
