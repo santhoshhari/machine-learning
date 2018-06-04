@@ -24,13 +24,14 @@ class DecisionTreeRegressor():
         self.n_cols = x.shape[1]
         self.predicted_value = np.mean(y[idxs])
         self.score = np.Inf
-        self.find_best_col()
+        self._find_best_col()
         self.is_leaf = True if self.score == np.Inf else False
 
-    def find_col_split(self, col_num):
+    def _find_col_split(self, col_num):
         """
         Function to find best value to split a column
         Minimizes MSE (score)
+        Returns the split and resulting score
         """
         y_vals = self.y.values[self.idxs]
         if compute_mse(y_vals) == 0:
@@ -39,30 +40,39 @@ class DecisionTreeRegressor():
         sorted_idxs = np.argsort(col_vals)
         sorted_x = col_vals[sorted_idxs]
         sorted_y = y_vals[sorted_idxs]
+        best_col_score = np.Inf
+        best_col_split = None
+        
         for i in range(1, self.n_rows-1):
             if sorted_x[i] == sorted_x[i+1]:
                 continue
             lhs_mse = compute_mse(sorted_y[:i])
             rhs_mse = compute_mse(sorted_y[i:])
             curr_score = lhs_mse + rhs_mse
-            if curr_score < self.score:
-                self.score = curr_score
-                self.col_num = col_num
-                self.split = sorted_x[i]
-                self.split_name = self.x.columns[self.col_num]
+            if curr_score < best_col_score:
+                best_col_score = curr_score
+                best_col_split = sorted_x[i]
+        
+        return best_col_score, best_col_split
 
-    def find_best_col(self):
+    def _find_best_col(self):
         """
-        Function to find best column to split on
+        Function to identify best column and split minimizing score
         """
         for i in range(self.n_cols):
-            self.find_col_split(i)
+            col_score, col_split = self._find_col_split(i)
+            if col_score < self.score:
+                self.score = col_score
+                self.col_num = i
+                self.split = col_split
+                self.split_name = self.x.columns[self.col_num]
         if self.score == np.Inf:
             return
         lhs_flag = self.x.values[self.idxs, self.col_num] < self.split
         rhs_flag = self.x.values[self.idxs, self.col_num] >= self.split
         self.lhs = DecisionTreeRegressor(self.x, self.y, self.idxs[lhs_flag])
         self.rhs = DecisionTreeRegressor(self.x, self.y, self.idxs[rhs_flag])
+
 
     def __repr__(self):
         s = f'n: {self.n_rows}; predicted_value:{self.predicted_value}'
@@ -71,13 +81,21 @@ class DecisionTreeRegressor():
             f' var:{self.split_name}'
         return s
 
+
     def predict_obs(self, xi):
+        """
+        Function to predict response for one observation
+        """
         if self.is_leaf:
             return self.predicted_value
         t = self.lhs if xi[self.col_num] < self.split else self.rhs
         return t.predict_obs(xi)
 
+
     def predict(self, x):
+        """
+        Function to predict response for all observations
+        """
         return np.array([self.predict_obs(xi) for _, xi in x.iterrows()])
 
 

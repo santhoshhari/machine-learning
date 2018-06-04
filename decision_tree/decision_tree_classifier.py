@@ -29,14 +29,15 @@ class DecisionTreeClassifier():
         self.n_cols = x.shape[1]
         self.predicted_value = mode(y[idxs])[0][0]
         self.score = 1.
-        self.find_best_col()
+        self._find_best_col()
         self.is_leaf = True if self.score == 1. else False
-        
-    
-    def find_col_split(self, col_num):
+
+
+    def _find_col_split(self, col_num):
         """
         Function to find best value to split a column
-        Minimizes MSE (score)
+        Minimizes Gini Impurity (score)
+        Returns the split and resulting score
         """
         y_vals = self.y.values[self.idxs]
         if compute_impurity(y_vals)==0: return
@@ -44,47 +45,67 @@ class DecisionTreeClassifier():
         sorted_idxs = np.argsort(col_vals)
         sorted_x = col_vals[sorted_idxs]
         sorted_y = y_vals[sorted_idxs]
-        
-        
+        best_col_score = 1.
+        best_col_split = None
+
+
         for i in range(1, self.n_rows-1):
             if sorted_x[i]==sorted_x[i+1]:
                 continue
+            left_proportion = len(sorted_y[:i])/self.nrows
             lhs_impurity = compute_impurity(sorted_y[:i])
             rhs_impurity = compute_impurity(sorted_y[i:])
-            curr_score = lhs_impurity + rhs_impurity
-            if curr_score < self.score:
-                self.score = curr_score
-                self.col_num = col_num
-                self.split = sorted_x[i]
-                self.split_name = self.x.columns[self.col_num]
-                
-                
-    def find_best_col(self):
+            curr_score = left_proportion * lhs_impurity +
+                        (1-left_proportion) * rhs_impurity
+            if curr_score < best_col_score:
+                best_col_score = curr_score
+                best_col_split = sorted_x[i]
+
+        return best_col_score, best_col_split
+
+
+    def _find_best_col(self):
+        """
+        Function to identify best column and split minimizing gini
+        """
         for i in range(self.n_cols):
-            self.find_col_split(i)
+            col_score, col_split = self._find_col_split(i)
+            if col_score < self.score:
+                self.score = col_score
+                self.col_num = i
+                self.split = col_split
+                self.split_name = self.x.columns[self.col_num]
+
         if self.score == 1.:
             return
         lhs_flag = self.x.values[self.idxs, self.col_num]<self.split
         rhs_flag = self.x.values[self.idxs, self.col_num]>=self.split
         self.lhs = DecisionTreeClassifier(self.x, self.y, self.idxs[lhs_flag])
         self.rhs = DecisionTreeClassifier(self.x, self.y, self.idxs[rhs_flag])
-        
-    
+
+
     def __repr__(self):
         s = f'n: {self.n_rows}; predicted_value:{self.predicted_value}'
         if not self.is_leaf:
             s += f'; score:{self.score}; split:{self.split}; var:{self.split_name}'
         return s
-    
-    
+
+
     def predict_obs(self, xi):
+        """
+        Function to predict class for one observation
+        """
         if self.is_leaf: return self.predicted_value
         t = self.lhs if xi[self.col_num] < self.split else self.rhs
         return t.predict_obs(xi)
-    
-    
+
+
     def predict(self, x):
+        """
+        Function to predict class for all observations
+        """
         return np.array([self.predict_obs(xi) for _,xi in x.iterrows()])
+
 
 if __name__ == "__main__":
     main()
