@@ -46,9 +46,11 @@ class DecisionTreeRegressor():
         for i in range(1, self.n_rows-1):
             if sorted_x[i] == sorted_x[i+1]:
                 continue
+            left_proportion = len(sorted_y[:i]) / self.n_rows
             lhs_mse = compute_mse(sorted_y[:i])
             rhs_mse = compute_mse(sorted_y[i:])
-            curr_score = lhs_mse + rhs_mse
+            curr_score = left_proportion * lhs_mse + \
+                         (1 - left_proportion) * rhs_mse
             if curr_score < best_col_score:
                 best_col_score = curr_score
                 best_col_split = sorted_x[i]
